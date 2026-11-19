@@ -70,7 +70,8 @@ SC.setupShot = (G, name) => {
   };
 
   if (name === 'drive') {
-    // Cover: driving down the avenue, HUD and minimap live, mission on.
+    // Cover: driving down the avenue at golden hour, HUD and minimap live, mission on.
+    G.dayT = 0.62;
     SC.startMission(G, 1);
     fadeBanner();
     G.shotCruise = true;
@@ -87,6 +88,7 @@ SC.setupShot = (G, name) => {
     SC.audio.engineStart();
   } else if (name === 'street') {
     // On foot in a busy street, pedestrians and traffic everywhere.
+    G.dayT = 0.6;
     SC.startMission(G, 0);
     fadeBanner();
     place(920, 700);
@@ -94,7 +96,9 @@ SC.setupShot = (G, name) => {
     addTrafficNear(920, 700, 6);
     addPedsNear(920, 700, 14);
   } else if (name === 'chase') {
-    // Three stars, three cruisers on the tail, the gold car at full speed.
+    // Five stars at night: Air One overhead, a roadblock ahead, three
+    // cruisers on the tail, the gold car at full speed, headlights on.
+    G.dayT = 0.88;
     SC.startMission(G, 4);
     fadeBanner();
     G.shotCruise = true;
@@ -110,8 +114,11 @@ SC.setupShot = (G, name) => {
     p.x = gold.x;
     p.y = gold.y;
     place(1420, 1160);
-    G.wanted = 3;
+    G.wanted = 5;
     G.crimeTimer = 0;
+    SC.spawnHeli(G);
+    G.heli.x = 1420;
+    G.heli.y = 1000;
     for (let i = 0; i < 3; i++) {
       const cop = SC.spawnPolice(G);
       cop.x = 1420 - 140 - i * 70;
@@ -119,16 +126,32 @@ SC.setupShot = (G, name) => {
       cop.speed = 330;
       cop.angle = 0;
     }
+    // A roadblock across the road ahead.
+    for (const off of [-28, 28]) {
+      const block = SC.makeCar(1760, 1160 + off, Math.PI / 2, SC.PALETTE.police, 'police');
+      block.driver = 'roadblock';
+      block.speed = 0;
+      G.cars.push(block);
+      G.roadblocks.push(block);
+    }
     addTrafficNear(1420, 1160, 3);
     SC.audio.engineStart();
   } else if (name === 'mission') {
-    // The Bank Job in progress: cash bags on the plaza, banner up.
-    SC.startMission(G, 3);
-    G.missionStage = 1;
-    place(1470, 950);
-    p.angle = Math.PI / 2;
-    addTrafficNear(1420, 760, 2);
-    addPedsNear(1420, 760, 5);
+    // Harbor Lights: the street race in progress, checkpoints ahead.
+    G.dayT = 0.32;
+    SC.startMission(G, 6);
+    fadeBanner();
+    const sports = SC.makeCar(2420, 420, Math.PI / 2, '#00bbf9', 'sports');
+    sports.driver = 'player';
+    sports.speed = 260;
+    G.cars.push(sports);
+    p.inCar = sports;
+    p.x = sports.x;
+    p.y = sports.y;
+    place(2420, 420);
+    G.shotCruise = true;
+    addTrafficNear(2420, 420, 3);
+    addPedsNear(2420, 420, 5);
   } else {
     // Unknown shot: just start the game at the garage.
     SC.startMission(G, 0);

@@ -183,3 +183,39 @@ SC.audio.sirenStop = () => {
   a.sirenLfo = null;
   a.sirenGain = null;
 };
+
+// Solara radio: three stations of loopy synth, R cycles them (and off).
+// Each station is a scale and a step pattern; 0 is a rest.
+SC.audio.stations = [
+  { name: 'SOLARA FM', step: 0.24, scale: [262, 330, 392, 494, 392, 330, 0, 262, 294, 392, 0, 330] },
+  { name: 'VICE 98', step: 0.17, scale: [131, 0, 165, 131, 196, 0, 165, 147, 131, 0, 110, 131] },
+  { name: 'SUNSET JAZZ', step: 0.34, scale: [220, 277, 330, 0, 370, 330, 0, 277, 247, 0, 220, 0] },
+];
+SC.audio.radio = { on: false, station: 0, step: 0, next: 0 };
+
+SC.audio.radioCycle = () => {
+  const r = SC.audio.radio;
+  if (!r.on) {
+    r.on = true;
+    r.station = 0;
+  } else if (r.station < SC.audio.stations.length - 1) {
+    r.station++;
+  } else {
+    r.on = false;
+  }
+  r.step = 0;
+  r.next = 0;
+  return r.on ? SC.audio.stations[r.station].name : null;
+};
+
+SC.audio.radioTick = (G) => {
+  const a = SC.audio;
+  const r = a.radio;
+  if (!r.on || !a.ctx || a.muted || a.disabled) return;
+  if (G.time < r.next) return;
+  const st = a.stations[r.station];
+  const f = st.scale[r.step % st.scale.length];
+  r.step++;
+  r.next = G.time + st.step;
+  if (f > 0) a.tone(f, f, st.step * 0.9, 'triangle', 0.07);
+};

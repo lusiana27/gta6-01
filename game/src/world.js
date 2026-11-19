@@ -21,6 +21,8 @@ SC.buildWorld = (seed) => {
     { key: 'safehouse', x: 1000, y: 1640, w: 200, h: 120, color: '#90be6d', label: 'SAFEHOUSE' },
     { key: 'docks', x: 2500, y: 1640, w: 240, h: 140, color: '#8d99ae', label: 'EAST DOCKS' },
     { key: 'marina', x: 2040, y: 430, w: 190, h: 110, color: '#f9c74f', label: 'MARINA' },
+    { key: 'casino', x: 2500, y: 430, w: 240, h: 130, color: '#b5179e', label: 'SOLARA CASINO' },
+    { key: 'airport', x: 2040, y: 180, w: 240, h: 110, color: '#8d99ae', label: 'SOLARA INTL' },
   ];
   for (const s of specials) {
     const b = { x: s.x, y: s.y, w: s.w, h: s.h, color: s.color, roof: SC.pick(rng, SC.PALETTE.roof), label: s.label, special: s.key };
@@ -100,7 +102,7 @@ SC.collideCar = (car) => {
   return hit;
 };
 
-SC.drawWorld = (ctx, cam) => {
+SC.drawWorld = (ctx, cam, time) => {
   const P = SC.PALETTE;
   // Screen-space drawing: ox/oy is the world point at the screen's top
   // left. The canvas clips everything outside itself, so no manual
@@ -111,6 +113,15 @@ SC.drawWorld = (ctx, cam) => {
   // Ground.
   ctx.fillStyle = P.grass;
   ctx.fillRect(0, 0, 1280, 720);
+  // The airport runway along the north edge, with its centre dashes.
+  ctx.fillStyle = '#3a3648';
+  ctx.fillRect(1500 - ox, 28 - oy, 1200, 46);
+  ctx.fillStyle = '#fff';
+  for (let x = 1540; x < 2680; x += 90) ctx.fillRect(x - ox, 48 - oy, 44, 5);
+  ctx.fillStyle = 'rgba(29,26,43,0.85)';
+  ctx.font = 'bold 13px Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('SOLARA INTL  ·  RUNWAY 09', 2100 - ox, 20 - oy);
   // Beach and water.
   ctx.fillStyle = P.sand;
   ctx.fillRect(0, SC.BEACH_Y - oy, 1280, SC.WORLD.h - SC.BEACH_Y);
@@ -120,6 +131,45 @@ SC.drawWorld = (ctx, cam) => {
   for (let x = 0; x < SC.WORLD.w; x += 160) {
     ctx.fillRect(x - ox, SC.WATER_Y + 30 - oy, 90, 4);
     ctx.fillRect(x + 70 - ox, SC.WATER_Y + 80 - oy, 70, 4);
+  }
+  // Boats bobbing off the beach.
+  const boats = [
+    { x: 420, c: '#f8f9fa' },
+    { x: 1420, c: '#ffd166' },
+    { x: 2420, c: '#8ecae6' },
+  ];
+  boats.forEach((b, i) => {
+    const bx = b.x - ox;
+    const by = SC.WATER_Y + 46 + Math.sin(time * 0.8 + i * 2.1) * 3 - oy;
+    if (bx < -60 || bx > 1340) return;
+    ctx.fillStyle = b.c;
+    ctx.beginPath();
+    ctx.roundRect(bx - 34, by - 8, 68, 16, 7);
+    ctx.fill();
+    ctx.fillStyle = '#1d3557';
+    ctx.fillRect(bx - 8, by - 20, 16, 12);
+  });
+  // Beach umbrellas.
+  const umbrellas = [
+    { x: 700, c: '#e63946' },
+    { x: 1100, c: '#f4a261' },
+    { x: 1800, c: '#2a9d8f' },
+    { x: 2200, c: '#9b5de5' },
+  ];
+  for (const u of umbrellas) {
+    const ux = u.x - ox;
+    const uy = SC.BEACH_Y + 60 - oy;
+    if (ux < -30 || ux > 1310) continue;
+    ctx.strokeStyle = '#8d5a2b';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(ux, uy);
+    ctx.lineTo(ux, uy - 16);
+    ctx.stroke();
+    ctx.fillStyle = u.c;
+    ctx.beginPath();
+    ctx.arc(ux, uy - 16, 16, Math.PI, 0);
+    ctx.fill();
   }
 
   // Sidewalks, then roads.

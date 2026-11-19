@@ -5,22 +5,28 @@
 // Space. A car has a driver ('player', 'traffic', 'police' or 'none' when
 // parked) and health; a wrecked car smokes and stops.
 
-SC.makeCar = (x, y, angle, color, kind) => ({
-  x,
-  y,
-  angle,
-  speed: 0,
-  len: 48,
-  wid: 24,
-  color,
-  kind: kind || 'sedan', // sedan | taxi | police | gold | van
-  driver: 'none',
-  health: 100,
-  wrecked: false,
-  brakeLight: false,
-  honkTimer: 0,
-  targetAngle: angle,
-});
+SC.makeCar = (x, y, angle, color, kind) => {
+  const k = kind || 'sedan'; // sedan | taxi | police | gold | sports | van
+  // Top speed by kind: a sports car outruns the SCPD; a van lumbers.
+  const top = k === 'sports' ? 480 : k === 'gold' ? 450 : k === 'police' ? 470 : k === 'van' ? 360 : 430;
+  return {
+    x,
+    y,
+    angle,
+    speed: 0,
+    len: k === 'van' ? 56 : 48,
+    wid: k === 'van' ? 26 : 24,
+    color,
+    kind: k,
+    maxSpeed: top,
+    driver: 'none',
+    health: 100,
+    wrecked: false,
+    brakeLight: false,
+    honkTimer: 0,
+    targetAngle: angle,
+  };
+};
 
 SC.spawnParkedCars = (G, rng) => {
   const spots = [];
@@ -109,13 +115,24 @@ SC.updatePlayerCar = (G, dt) => {
   const left = k.KeyA || k.ArrowLeft;
   const right = k.KeyD || k.ArrowRight;
   const handbrake = k.Space;
-  const maxSpeed = 430;
+  const maxSpeed = car.maxSpeed || 430;
   const maxReverse = 150;
   if (forward) car.speed += 300 * dt;
   if (back) car.speed -= car.speed > 20 ? 420 * dt : 200 * dt;
   if (!forward && !back) car.speed -= Math.sign(car.speed) * Math.min(Math.abs(car.speed), 140 * dt);
   if (handbrake) car.speed -= Math.sign(car.speed) * Math.min(Math.abs(car.speed), 520 * dt);
   car.speed = SC.clamp(car.speed, -maxReverse, maxSpeed);
+  // Handbrake slides leave skid marks on the asphalt.
+  if (handbrake && Math.abs(car.speed) > 150) {
+    G.skidTimer -= dt;
+    if (G.skidTimer <= 0) {
+      G.skidTimer = 0.05;
+      const bx = car.x - Math.cos(car.angle) * 18;
+      const by = car.y - Math.sin(car.angle) * 18;
+      G.skids.push({ x: bx, y: by, angle: car.angle, life: 6 });
+      if (G.skids.length > 150) G.skids.shift();
+    }
+  }
   const steer = (left ? -1 : 0) + (right ? 1 : 0);
   const grip = handbrake ? 1.9 : 1;
   car.angle += steer * 2.5 * grip * (car.speed / maxSpeed) * dt * (car.speed < 0 ? -1 : 1);
@@ -155,6 +172,7 @@ SC.damageCar = (G, car, amount) => {
     car.health = 0;
     car.wrecked = true;
     car.speed = 0;
+    SC.spawnExplosion(G, car.x, car.y);
     if (car.driver === 'player') {
       SC.audio.engineStop();
       SC.addMessage(G, 'Your ride is wrecked — get out!', '#e63946');
@@ -199,6 +217,19 @@ SC.drawCar = (ctx, cam, car, time) => {
     ctx.font = 'bold 9px Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('TAXI', 0, 3);
+  }
+  if (car.kind === 'sports') {
+    // Rear spoiler and a racing stripe.
+    ctx.fillStyle = '#1d1a2b';
+    ctx.fillRect(-car.len / 2 - 2, -car.wid / 2 - 1, 4, car.wid + 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.fillRect(-4, -3, car.len - 4, 6);
+  }
+  if (car.kind === 'van') {
+    ctx.fillStyle = '#222';
+    ctx.font = 'bold 9px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('VAN', 0, 3);
   }
   if (car.kind === 'gold') {
     ctx.strokeStyle = '#fff3b0';

@@ -114,6 +114,18 @@ SC.spawnSparks = (G, x, y, n) => {
   }
 };
 
+// A wrecked car goes up in a fireball: orange sparks, grey smoke, noise.
+SC.spawnExplosion = (G, x, y) => {
+  for (let i = 0; i < 22; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const s = SC.range(Math.random, 80, 320);
+    const color = i % 3 === 0 ? '#8d99ae' : i % 3 === 1 ? '#f3722c' : '#ffd60a';
+    G.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: SC.range(Math.random, 0.4, 0.9), color });
+  }
+  SC.audio.crash();
+  SC.addHeat(G, 0.5);
+};
+
 SC.drawBullets = (ctx, cam, G) => {
   ctx.fillStyle = '#fff3b0';
   for (const b of G.bullets) {

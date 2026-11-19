@@ -18,7 +18,7 @@ SC.spawnTraffic = (G, rng, count) => {
       vertical ? along : road + lane,
       vertical ? (dir > 0 ? Math.PI / 2 : -Math.PI / 2) : dir > 0 ? 0 : Math.PI,
       SC.pick(rng, SC.PALETTE.car),
-      rng() < 0.1 ? 'taxi' : 'sedan',
+      rng() < 0.1 ? 'taxi' : rng() < 0.08 ? 'van' : 'sedan',
     );
     car.driver = 'traffic';
     car.speed = SC.range(rng, 85, 130);
@@ -120,6 +120,8 @@ SC.spawnPeds = (G, rng, count) => {
 SC.updatePeds = (G, dt) => {
   const playerCar = G.player.inCar;
   for (const ped of G.peds) {
+    // Waiting fares and riding passengers stand still; the down stay down.
+    if (ped.state === 'wait' || ped.state === 'riding') continue;
     if (ped.state === 'down') {
       ped.downTimer -= dt;
       if (ped.downTimer <= 0) {
@@ -173,9 +175,17 @@ SC.updatePeds = (G, dt) => {
 
 SC.drawPeds = (ctx, cam, G) => {
   for (const ped of G.peds) {
+    if (ped.state === 'riding') continue; // in the cab, out of sight
     const sx = ped.x - (cam.x - 640);
     const sy = ped.y - (cam.y - 360);
     if (sx < -30 || sx > 1310 || sy < -30 || sy > 750) continue;
+    // A waiting fare waves a hand: a gold "!" over their head.
+    if (ped.state === 'wait') {
+      ctx.fillStyle = '#ffd60a';
+      ctx.font = 'bold 18px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('!', sx, sy - 16 + Math.sin(G.time * 5) * 2);
+    }
     ctx.save();
     ctx.translate(sx, sy);
     if (ped.state === 'down') {

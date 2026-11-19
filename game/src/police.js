@@ -1,24 +1,30 @@
 // Solara City — the wanted level and the SCPD.
 //
 // Heat rises with crime (carjacking, hitting people, shooting, mission
-// heat) and cools when Milo keeps his nose clean. The police spawn at the
-// edge of the map, chase, ram, and — when Milo is on foot and cornered —
-// move in for the bust.
+// heat) and cools when Milo keeps his nose clean. Five stars is the top:
+// cruisers chase, roadblocks cut the roads ahead, and at three stars Air
+// One circles overhead. The police spawn at the edge of the map, chase,
+// ram, and — when Milo is on foot and cornered — move in for the bust.
+
+SC.MAX_WANTED = 5;
 
 SC.addHeat = (G, amount, why) => {
   if (G.state !== 'playing') return;
   const before = G.wanted;
-  G.wanted = SC.clamp(G.wanted + amount, 0, 3);
+  G.wanted = SC.clamp(G.wanted + amount, 0, SC.MAX_WANTED);
   G.crimeTimer = 0;
   if (G.wanted > before && why) SC.addMessage(G, why + '  Wanted level up!', '#e63946');
   if (G.wanted >= 1) SC.audio.sirenStart();
 };
 
 SC.updateWanted = (G, dt) => {
-  G.crimeTimer += dt;
+  // Laying low in the garage forecourt or at the Safehouse cools the heat
+  // three times as fast.
+  const cool = SC.inLayLowZone(G) ? 3 : 1;
+  G.crimeTimer += dt * cool;
   // Twelve quiet seconds, then one star cools off every eight seconds.
   if (G.wanted > 0 && G.crimeTimer > 12) {
-    G.coolTimer += dt;
+    G.coolTimer += dt * cool;
     if (G.coolTimer > 8) {
       G.coolTimer = 0;
       G.crimeTimer = 0;
@@ -55,15 +61,62 @@ SC.spawnPolice = (G) => {
 
 SC.policeCount = (G) => G.cars.filter((c) => c.driver === 'police' && !c.wrecked).length;
 
+// A roadblock: two cruisers parked across the road ahead of Milo, there
+// to be rammed through or driven around. Only at four stars and up.
+SC.spawnRoadblock = (G) => {
+  const p = G.player;
+  const ahead = 380;
+  const ax = p.x + Math.cos(p.angle) * ahead;
+  const ay = p.y + Math.sin(p.angle) * ahead;
+  // Snap to the nearest road, then lay the cruisers across it.
+  const rx = SC.ROADS_V.reduce((a, b) => (Math.abs(ax - a) < Math.abs(ax - b) ? a : b));
+  const ry = SC.ROADS_H.reduce((a, b) => (Math.abs(ay - a) < Math.abs(ay - b) ? a : b));
+  const vertical = Math.abs(ax - rx) < Math.abs(ay - ry);
+  const cx = vertical ? rx : SC.clamp(ax, 120, SC.WORLD.w - 120);
+  const cy = vertical ? SC.clamp(ay, 120, SC.BEACH_Y - 120) : ry;
+  const made = [];
+  for (const off of [-28, 28]) {
+    const car = SC.makeCar(
+      vertical ? cx + off : cx,
+      vertical ? cy : cy + off,
+      vertical ? 0 : Math.PI / 2,
+      SC.PALETTE.police,
+      'police',
+    );
+    car.driver = 'roadblock';
+    car.speed = 0;
+    G.cars.push(car);
+    made.push(car);
+  }
+  G.roadblocks.push(...made);
+  SC.addMessage(G, 'Roadblock ahead!', '#e63946');
+};
+
 SC.updatePolice = (G, dt) => {
   const want = G.wanted >= 1 ? G.wanted : 0;
-  const target = want === 0 ? 0 : want + 1; // 2 cruisers at 1 star, up to 4
+  const target = want === 0 ? 0 : Math.min(want + 1, 6); // 2 cruisers at 1 star, up to 6
   let count = SC.policeCount(G);
   G.policeSpawnTimer -= dt;
+  // Air One overhead means backup arrives twice as fast.
+  const interval = G.heli ? 1.2 : 2.5;
   if (count < target && G.policeSpawnTimer <= 0) {
     SC.spawnPolice(G);
-    G.policeSpawnTimer = 2.5;
+    G.policeSpawnTimer = interval;
     count++;
+  }
+  // Roadblocks at four stars and up, two at a time.
+  const wantBlocks = want >= 4 ? 2 : 0;
+  const liveBlocks = G.roadblocks.filter((c) => !c.gone && !c.wrecked).length;
+  if (liveBlocks < wantBlocks && G.roadblockTimer <= 0) {
+    SC.spawnRoadblock(G);
+    G.roadblockTimer = 9;
+  }
+  G.roadblockTimer -= dt;
+  if (want < 4) {
+    for (const c of G.roadblocks) c.gone = true;
+    G.roadblocks = [];
+  } else {
+    G.roadblocks = G.roadblocks.filter((c) => !c.gone);
   }
   // No heat: cruisers give up and drive off.
   const p = G.player;
@@ -80,7 +133,7 @@ SC.updatePolice = (G, dt) => {
     const wantAngle = SC.angleTo(car.x, car.y, p.x, p.y);
     const diff = SC.angleDiff(car.angle, wantAngle);
     car.angle += SC.clamp(diff, -2.6 * dt, 2.6 * dt);
-    const top = 300 + want * 45;
+    const top = Math.min(300 + want * 45, 470);
     car.speed = SC.lerp(car.speed, top, dt * 0.8);
     car.x += Math.cos(car.angle) * car.speed * dt;
     car.y += Math.sin(car.angle) * car.speed * dt;

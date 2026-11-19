@@ -42,6 +42,10 @@ SC.PLACES = {
   safehouse: { x: 920, y: 1960, name: 'Safehouse', blurb: 'Lay low' },
   marina: { x: 2420, y: 360, name: 'Marina', blurb: 'Gold car' },
   beach: { x: 1420, y: 2220, name: 'Solara Beach', blurb: 'Sunset strip' },
+  airport: { x: 2160, y: 240, name: 'Solara Intl', blurb: 'Runway' },
+  casino: { x: 2620, y: 500, name: 'Solara Casino', blurb: 'High rollers' },
+  gunshop: { x: 982, y: 1096, name: 'Gun Runner', blurb: 'Ammo' },
+  taco: { x: 1420, y: 2184, name: 'Taco Stand', blurb: 'Hot meals' },
 };
 
 SC.clamp = (v, a, b) => (v < a ? a : v > b ? b : v);

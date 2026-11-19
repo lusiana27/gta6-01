@@ -57,9 +57,9 @@ SC.drawMinimap = (ctx, G) => {
 
 SC.drawHUD = (ctx, G) => {
   const p = G.player;
-  // Top-left: cash and health.
+  // Top-left: cash, health, and the job count.
   ctx.fillStyle = 'rgba(10,10,18,0.85)';
-  ctx.fillRect(12, 12, 250, 64);
+  ctx.fillRect(12, 12, 250, 84);
   ctx.fillStyle = '#ffd60a';
   ctx.font = 'bold 24px Arial, sans-serif';
   ctx.textAlign = 'left';
@@ -71,27 +71,41 @@ SC.drawHUD = (ctx, G) => {
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 11px Arial, sans-serif';
   ctx.fillText('HP ' + Math.ceil(p.health), 210, 62);
-  // Ammo and speed.
-  ctx.fillStyle = '#fff';
+  ctx.fillStyle = '#ffd60a';
+  ctx.font = 'bold 12px Arial, sans-serif';
+  ctx.fillText('JOB ' + (G.missionIndex + 1) + '/' + SC.MISSIONS.length + '   ·   HAUL $' + G.earned.toLocaleString('en-US'), 24, 86);
+  // Ammo and speed, on a dark pill so it reads over any ground.
   ctx.font = 'bold 15px Arial, sans-serif';
-  ctx.fillText(p.inCar ? 'SPEED ' + Math.round(Math.abs(p.inCar.speed) * 0.24) + ' mph' : 'AMMO ' + G.ammo, 24, 92);
+  const speedText = p.inCar ? 'SPEED ' + Math.round(Math.abs(p.inCar.speed) * 0.24) + ' mph' : 'AMMO ' + G.ammo;
+  ctx.fillStyle = 'rgba(10,10,18,0.7)';
+  ctx.fillRect(12, 100, ctx.measureText(speedText).width + 24, 24);
+  ctx.fillStyle = '#fff';
+  ctx.fillText(speedText, 24, 117);
   if (p.inCar && p.inCar.wrecked) {
     ctx.fillStyle = '#e63946';
-    ctx.fillText('WRECKED — press E to get out', 24, 112);
+    ctx.fillText('WRECKED — press E to get out', 24, 137);
   }
 
-  // Top-right: wanted stars.
+  // Top-right: the clock and five wanted stars.
+  const hours = Math.floor(G.dayT * 24);
+  const mins = Math.floor((G.dayT * 24 - hours) * 60);
+  const clock = String(hours).padStart(2, '0') + ':' + String(mins).padStart(2, '0');
   ctx.fillStyle = 'rgba(10,10,18,0.85)';
-  ctx.fillRect(1280 - 216, 12, 204, 48);
-  ctx.font = '26px Arial, sans-serif';
+  ctx.fillRect(1280 - 252, 12, 240, 64);
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 13px Arial, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText(clock, 1264, 30);
+  ctx.font = '24px Arial, sans-serif';
   ctx.textAlign = 'left';
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < SC.MAX_WANTED; i++) {
     ctx.fillStyle = i < G.wanted ? '#ffd60a' : 'rgba(255,255,255,0.25)';
-    ctx.fillText('★', 1280 - 200 + i * 34, 44);
+    ctx.fillText('★', 1280 - 236 + i * 32, 62);
   }
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 12px Arial, sans-serif';
-  ctx.fillText(G.wanted > 0 ? 'WANTED' : 'CLEAN', 1280 - 96, 38);
+  ctx.textAlign = 'left';
+  ctx.fillText(G.wanted > 0 ? 'WANTED' : 'CLEAN', 1206, 62);
 
   // Bottom-centre: mission objective.
   const stage = SC.currentStage(G);
@@ -113,7 +127,7 @@ SC.drawHUD = (ctx, G) => {
     .filter((m) => m.until > G.time)
     .forEach((m, i) => {
       ctx.fillStyle = m.color;
-      ctx.fillText(m.text, 24, 132 + i * 22);
+      ctx.fillText(m.text, 24, 156 + i * 22);
     });
 
   // Mission banner.
@@ -136,11 +150,18 @@ SC.drawHUD = (ctx, G) => {
   }
 
   SC.drawMinimap(ctx, G);
+  // Radio station, bottom-right.
+  if (SC.audio.radio.on) {
+    ctx.fillStyle = 'rgba(255,255,255,0.75)';
+    ctx.font = 'bold 13px Arial, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('♪ ' + SC.audio.stations[SC.audio.radio.station].name, 1264, 694);
+  }
   // Controls hint.
   ctx.fillStyle = 'rgba(255,255,255,0.55)';
   ctx.font = '12px Arial, sans-serif';
   ctx.textAlign = 'right';
-  ctx.fillText('WASD move/drive · E enter car · F punch · Mouse shoot · P pause · M mute', 1264, 716);
+  ctx.fillText('WASD drive · E car · F punch · Mouse shoot · G garage · B shop · T fare/race · R radio · P pause', 1264, 716);
 };
 
 SC.drawMenu = (ctx, G) => {
@@ -163,16 +184,18 @@ SC.drawMenu = (ctx, G) => {
   ctx.fillText('SOLARA CITY', 640, 190);
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 20px Arial, sans-serif';
-  ctx.fillText('An open-world crime game — five jobs, one sunset.', 640, 226);
+  ctx.fillText('An open-world crime game — ten jobs, one sunset.', 640, 226);
   ctx.font = '15px Arial, sans-serif';
   ctx.fillStyle = '#ddd';
   const lines = [
     'Milo Reyes is back in Solara City with nothing but a stolen jacket and a fast right foot.',
-    'The Sunset Crew has five jobs for him: wheels, a pickup, the heat, a bank, and one last score.',
-    'Steal cars, lose the SCPD, and bring the money home.',
+    'The Sunset Crew has ten jobs for him: wheels, a pickup, the heat, a bank, one last score —',
+    'then a taxi shift, a street race, a casino cut, an airport run, and the crown itself.',
+    'Steal cars, lose the SCPD, and bring the money home. Five stars is the top: Air One is watching.',
     '',
     'WASD / Arrows — walk & drive      E — get in / out of a car',
-    'Mouse — aim & shoot      F — punch      P — pause      M — mute',
+    'Mouse — aim & shoot      F — punch      G — garage repair      C — respray',
+    'B — shop      T — taxi fare / street race      R — radio      P — pause      M — mute',
     '',
     'Progress saves after every finished job.',
   ];
@@ -221,7 +244,7 @@ SC.drawComplete = (ctx, G) => {
     ctx,
     G,
     'YOU OWN SOLARA CITY',
-    ['All five jobs done. The gold car is yours, the crew is rich,', 'and the sunset over the beach has never looked better.', 'Total haul: $' + G.cash.toLocaleString('en-US')],
+    ['All ten jobs done. The gold car is yours, the crew is rich,', 'and the sunset over the beach has never looked better.', 'Total haul: $' + G.cash.toLocaleString('en-US')],
     'Press Enter to play again',
   );
 };

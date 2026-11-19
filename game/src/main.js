@@ -33,14 +33,27 @@ const G = {
   crimeTimer: 0,
   coolTimer: 0,
   policeSpawnTimer: 0,
+  roadblockTimer: 0,
+  roadblocks: [],
+  heli: null,
+  heliLeave: 0,
   bustTimer: 0,
   cash: 0,
+  earned: 0,
   ammo: 24,
   shootCooldown: 0,
   missionIndex: 0,
   mission: null,
   missionStage: 0,
   missionBags: 0,
+  fare: null, // the story taxi job's current fare
+  race: null, // the story race mission's current run
+  fare2: null, // the free-roam taxi fare
+  fareCooldown: 0,
+  race2: null, // the free-roam street race
+  skids: [],
+  skidTimer: 0,
+  dayT: 0.32, // golden afternoon; a full day runs about four minutes
   camera: { x: 480, y: 420 },
   banner: null,
   messages: [],
@@ -83,6 +96,15 @@ function startNewGame(fromSave) {
   G.particles = [];
   G.messages = [];
   G.banner = null;
+  G.roadblocks = [];
+  G.heli = null;
+  G.fare = null;
+  G.race = null;
+  G.fare2 = null;
+  G.race2 = null;
+  G.skids = [];
+  G.dayT = 0.32;
+  G.earned = fromSave ? G.earned : 0;
   for (const car of G.cars) {
     if (car.driver === 'police') car.gone = true;
     if (car.driver === 'player') car.driver = 'none';
@@ -104,6 +126,12 @@ function restartMission() {
   G.bustTimer = 0;
   G.bullets = [];
   G.messages = [];
+  G.roadblocks = [];
+  G.heli = null;
+  G.fare = null;
+  G.race = null;
+  G.fare2 = null;
+  G.race2 = null;
   for (const car of G.cars) {
     if (car.driver === 'police') car.gone = true;
   }
@@ -142,6 +170,7 @@ function update(dt) {
     return;
   }
   if (SC.input.wasPressed('KeyM')) SC.audio.toggleMute();
+  if (SC.input.wasPressed('KeyR')) SC.audio.radioCycle();
   if (SC.input.wasPressed('KeyE')) {
     if (G.player.inCar) SC.exitCar(G);
     else SC.tryEnterCar(G);
@@ -156,10 +185,20 @@ function update(dt) {
   SC.updatePeds(G, dt);
   SC.updateWanted(G, dt);
   SC.updatePolice(G, dt);
+  SC.updateHeli(G, dt);
+  SC.updateGarage(G, dt);
+  SC.updateActivities(G, dt);
   SC.updateMissions(G, dt);
   SC.updatePickups(G, dt);
   SC.updateCombat(G, dt);
   SC.updateCamera(G, dt);
+  SC.audio.radioTick(G);
+
+  // The day turns: a full cycle runs about four minutes.
+  G.dayT = (G.dayT + dt / 240) % 1;
+  // Skid marks fade.
+  for (const s of G.skids) s.life -= dt;
+  G.skids = G.skids.filter((s) => s.life > 0);
 
   // A fresh ammo cache turns up somewhere in the city now and then.
   G.pickupRespawn -= dt;
