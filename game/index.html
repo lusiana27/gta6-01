@@ -1,34 +1,16 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Solara City — an open-world crime game</title>
-  <style>
-    html, body { margin: 0; padding: 0; background: #14121f; height: 100%; }
-    body { display: flex; align-items: center; justify-content: center; }
-    canvas { display: block; width: 1280px; height: 720px; background: #1d1a2b; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sunport City — Open World Crime Game | 12 Missions, 5-Star Wanted</title>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <canvas id="game" width="1280" height="720"></canvas>
-  <script src="src/config.js"></script>
-  <script src="src/input.js"></script>
-  <script src="src/audio.js"></script>
-  <script src="src/world.js"></script>
-  <script src="src/save.js"></script>
-  <script src="src/player.js"></script>
-  <script src="src/vehicles.js"></script>
-  <script src="src/traffic.js"></script>
-  <script src="src/police.js"></script>
-  <script src="src/heli.js"></script>
-  <script src="src/garage.js"></script>
-  <script src="src/activities.js"></script>
-  <script src="src/missions.js"></script>
-  <script src="src/combat.js"></script>
-  <script src="src/hud.js"></script>
-  <script src="src/render.js"></script>
-  <script src="src/shots.js"></script>
-  <script src="src/main.js"></script>
+<div id="wrap">
+  <canvas id="game" width="1280" height="800"></canvas>
+  <div id="hint">WASD drive / walk &nbsp;·&nbsp; E enter &amp; exit car &nbsp;·&nbsp; F punch &nbsp;·&nbsp; Click shoot (with pistol) &nbsp;·&nbsp; Q radio &nbsp;·&nbsp; M mute &nbsp;·&nbsp; S save &nbsp;·&nbsp; P pause &nbsp;·&nbsp; Esc menu</div>
+</div>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>

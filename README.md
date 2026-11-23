@@ -1,35 +1,62 @@
-# gta6-01
+# Sunport City — 12 Missions · 5-Star Wanted · Open-World Crime Game
 
-[![make.fun · gta6-01](https://make.fun/badge/gta6-01.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
-[![rank](https://make.fun/badge/gta6-01/lusiana27/gta6-01/rank.svg)](https://make.fun/bounty/gta6-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
-[![reward](https://make.fun/badge/gta6-01/lusiana27/gta6-01/reward.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
+[![make.fun](https://make.fun/badge/competition/gta6-01)](https://make.fun/c/gta6-01)
+[![make.fun](https://make.fun/badge/entry/gta6-01)](https://make.fun/c/gta6-01)
+[![make.fun](https://make.fun/badge/bounty/gta6-01)](https://make.fun/c/gta6-01)
 
-**Solara City** — an original open-world crime game in the spirit of GTA 6, built from scratch in plain canvas JavaScript. No Rockstar IP anywhere: the city, the crew, the story and the art are all our own.
+An original open-world crime game for the [Make GTA 6 bounty](https://make.fun/c/gta6-01)
+on make.fun — built from scratch in plain HTML5 Canvas and JavaScript, no
+libraries, no network, no copied assets. Enter the bounty with referral code
+`j11vkafs`.
 
-Milo Reyes is back in Solara City with nothing but a stolen jacket and a fast right foot. The Sunset Crew has ten jobs for him: steal wheels, run a pickup at the East Docks, lose the SCPD heat, rob Solara Bank, take the gold convertible from the Marina — then a taxi shift, a street race, a casino cut, an airport run in a stolen sports car, and one last job to become King of Solara.
+## The game
 
-What is in the game:
+Sunport City is a sun-soaked coastal city you explore on foot and by car:
+seven districts from Palm Beach to the Neon Palms Casino, traffic and
+pedestrians on every street, cars to steal, and a police force that answers
+your wanted level with patrol cars, the Air One helicopter and roadblocks.
 
-- A sun-soaked coastal city to explore on foot and by car — roads, sidewalks, palms, a beach, the docks, an airport runway and a casino
-- Traffic that drives the grid (sedans, taxis, vans) and pedestrians who stroll, flee and flag down cabs
-- Cars to steal and drive, with arcade handling, handbrake slides, skid marks, crashes, explosions and wrecks
-- A wanted level (0–5 stars) with SCPD cruisers that chase and ram, roadblocks at four stars, and the Air One helicopter circling overhead at three
-- Ten story missions with objectives, cash rewards and a finale — plus taxi fares and street races to run between jobs
-- A garage to repair and respray your ride, shops that sell ammo and hot meals, and safe places to lay low and cool the heat
-- Combat on foot: punch and a pistol, with ammo and health pickups
-- A living day: golden afternoon, dusk, then night with headlights; three radio stations
-- HUD with cash, health, job count, wanted stars, a clock, speed and a live minimap
-- Start screen, pause, busted / complete screens, and saves after every finished job (localStorage)
-- Synthetic WebAudio sound: engine hum, sirens, gunshots, pickups and mission jingles
+- **12 story missions** — jobs from Mara Voss, Rico and The Fixer. Steal the
+  getaway car, run the taxi, race the beach checkpoints, smuggle the crate,
+  burn the evidence and rob the casino vault — then escape with five stars.
+  Payouts run from $500 to $12,000 for the final run, King of Sunport.
+- **5-star wanted system** — cops chase and ram your car, the Air One
+  helicopter hunts you from 3 stars, roadblocks seal the roads from 4.
+  Get busted on foot or wasted and you pay for it; go dark and the heat
+  cools off star by star.
+- **A living city** — 26+ traffic cars with intersection AI, 40+ pedestrians
+  who panic and run, a day/night cycle with street lamps, three procedural
+  radio stations (Sun FM 101, Bay 98 Chill, Static X) synthesized live in
+  WebAudio, shops (garage repair/repaint/armor, Palm Diner health, Ironworks
+  Guns), combat (punch, pistol) and save/load.
 
-## Run it
+## Controls
 
-```sh
-node serve.ts
-```
+| Key | Action |
+| --- | --- |
+| WASD / arrows | Walk or drive |
+| E | Enter & exit a car, or use a shop |
+| F | Punch |
+| Mouse click | Shoot (buy a pistol at Ironworks Guns first) |
+| Enter | Start the next mission |
+| Q / M | Switch radio station / mute |
+| S | Save game |
+| P / Esc | Pause / menu |
 
-Then open http://localhost:8080 in desktop Chrome. Play with keyboard and mouse: WASD to walk and drive, E to get in and out of a car, F to punch, mouse to aim and shoot, G to repair at the garage, C to respray, B to buy at a shop, T for taxi fares and street races, R to change the radio, P to pause, M to mute.
+## Play it
 
----
+No build step and no network: open `game/index.html` in desktop Chrome, or
+serve the folder with any static server (`python3 -m http.server` in this
+directory, then open `http://localhost:8000/game/`).
 
-<sub>Entered on [make.fun](https://make.fun/?ref=j11vkafs&utm_source=github&utm_medium=readme&utm_campaign=gta6-01) · AI agents build software for cash rewards</sub>
+## How it is built
+
+`game/js/` is split by job — `main.js` (state, loop, input), `city.js` (map
+and day/night), `entities.js` (player, traffic, pedestrians), `police.js`
+(wanted, cops, helicopter, roadblocks), `missions.js` (the 12-mission
+engine), `hud.js` (HUD, minimap, menus), `audio.js` (synthesized radio and
+effects). `main.ts` hands the game in to make.fun.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
